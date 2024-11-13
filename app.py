@@ -4,25 +4,30 @@ import time
 import plotly.graph_objects as go
 import geopandas as gpd
 import plotly.express as px
-
+from PIL import Image
+import os
+from datetime import datetime
 from src.helper import CitiesDataset
 
 # Configure the page settings
-st.set_page_config(layout="wide")
-
-# Initialize session state for navigation if not exists
-if 'current_page' not in st.session_state:
-    st.session_state.current_page = "Welcome"
+st.set_page_config(layout="wide", page_title="Around the World Adventure", page_icon="🌍")
 
 # Custom CSS for styling
 st.markdown("""
     <style>
     .stButton button {
-        width: 100%;
-        background-color: rgba(255, 255, 255, 0.1);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        padding: 10px;
+        background-color: #1E88E5;
+        color: white;
+        padding: 10px 20px;
         border-radius: 5px;
+        border: none;
+        transition: background-color 0.3s ease;
+    }
+    .stButton button:hover {
+        background-color: #1565C0;
+    }
+    .stProgress > div > div > div {
+        background-color: #1E88E5;
     }
     .welcome-text {
         text-align: center;
@@ -32,128 +37,210 @@ st.markdown("""
         background-color: rgba(0, 0, 0, 0.5);
         margin: 20px;
     }
+    .city-card {
+        background-color: rgba(255, 255, 255, 0.1);
+        padding: 20px;
+        border-radius: 10px;
+        margin: 10px 0;
+    }
+    .journey-summary {
+        background-color: rgba(30, 136, 229, 0.1);
+        padding: 20px;
+        border-radius: 10px;
+        margin: 20px 0;
+        text-align: center;
+    }
     </style>
 """, unsafe_allow_html=True)
 
-# Navigation menu at the top
+# Initialize session state for navigation if not exists
+if 'current_page' not in st.session_state:
+    st.session_state.current_page = "Welcome"
+if 'journey_started' not in st.session_state:
+    st.session_state.journey_started = False
+
+
+# Helper functions
+def create_progress_bar(current, total):
+    progress_bar = st.progress(0)
+    progress_text = st.empty()
+    progress_percentage = (current + 1) / total
+    progress_bar.progress(progress_percentage)
+    progress_text.text(f"Journey Progress: {current + 1}/{total} cities visited")
+    return progress_bar, progress_text
+
+
+def create_city_card(city_name, country, duration):
+    st.markdown(f"""
+        <div class="city-card">
+            <h2 style='color: #1E88E5; margin: 0;'>{city_name.title()}</h2>
+            <p style='color: #666; margin: 5px 0;'>{country.title()}</p>
+            <p style='color: #333; margin: 5px 0;'>Time spent: {duration:.1f} days</p>
+        </div>
+    """, unsafe_allow_html=True)
+
+
+def create_journey_summary(total_time, total_cities, start_city):
+    st.markdown(f"""
+        <div class="journey-summary">
+            <h3 style='color: #1E88E5; margin: 0;'>Journey Summary</h3>
+            <p style='font-size: 1.2em; margin: 10px 0;'>Starting from: {start_city.title()}</p>
+            <p>Total Cities: {total_cities}</p>
+            <p>Estimated Duration: {total_time:.1f} days</p>
+        </div>
+    """, unsafe_allow_html=True)
+
+
+def create_transition_animation(animation_container):
+    for _ in range(3):
+        animation_container.markdown("🛫 Flying...")
+        time.sleep(0.3)
+        animation_container.markdown("✈️ Flying...")
+        time.sleep(0.3)
+        animation_container.markdown("🛬 Flying...")
+        time.sleep(0.3)
+        animation_container.empty()
+
+
+# Navigation menu
 menu_items = ["Welcome", "Experience the Journey", "See Your Travel on the Map", "Population Map"]
 cols = st.columns(len(menu_items))
 for idx, page in enumerate(menu_items):
     if cols[idx].button(page):
         st.session_state.current_page = page
 
+# Load cities dataset
 cities_dataset = CitiesDataset('./worldcitiespop.csv')
 cities_dataset.load_data()
 cities = cities_dataset.get_data()
 
-# Only show sidebar and calculate result if on Experience the Journey page
-if st.session_state.current_page == "Experience the Journey":
-    # Show sidebar only on Experience the Journey page
-    with st.sidebar:
-        st.title("Travel Around the World in 80 Days 🌍")
-        start_city = st.text_input("Starting City", "London")
-        start_country = st.text_input("Starting Country", "England")
-        max_days = st.slider("Maximum Days", 1, 80, 80)
-
-        # todo: add here st error messages regarding to start city and country options
-
-    result, min_time = travel_around_the_world(cities, start_city.lower(), start_country.lower(), max_days)
-    journey = result
-else:
-    # Default values for other pages if needed
-    result = []
-    min_time = 0
-
 # Page content
 if st.session_state.current_page == "Welcome":
     st.markdown(
-        f"""
-            <style>
-            .stApp {{
-                background-image: url("./wallpapers/world.webp");
-                background-size: cover;
-                background-position: center;
-            }}
-            </style>
-            """,
+        """
+        <style>
+        .stApp {
+            background-image: url("./wallpapers/world.webp");
+            background-size: cover;
+            background-position: center;
+        }
+        </style>
+        """,
         unsafe_allow_html=True
     )
 
     st.markdown("""
-            <div class="welcome-text">
-                <h1>Welcome to Around the World in 80 Days 🌍</h1>
-                <p>Embark on an extraordinary journey around the globe, following in the footsteps of Phileas Fogg!</p>
-                <p>Use the navigation menu above to:</p>
-                <ul>
-                    <li>Experience your journey through city photos</li>
-                    <li>Track your route on an interactive map</li>
-                    <li>Explore population data across the world</li>
-                </ul>
-                <p>Begin your adventure by selecting "Experience the Journey" above!</p>
+        <div class="welcome-text">
+            <h1>Welcome to Around the World in 80 Days 🌍</h1>
+            <p>Embark on an extraordinary journey around the globe, following in the footsteps of Phileas Fogg!</p>
+            <p>Use the navigation menu above to:</p>
+            <ul>
+                <li>Experience your journey through city photos</li>
+                <li>Track your route on an interactive map</li>
+                <li>Explore population data across the world</li>
+            </ul>
+            <p>Begin your adventure by selecting "Experience the Journey" above!</p>
+        </div>
+    """, unsafe_allow_html=True)
+
+elif st.session_state.current_page == "Experience the Journey":
+    st.title("Around the World Adventure 🌍")
+
+    # Sidebar configuration
+    with st.sidebar:
+        st.markdown("""
+            <div style='background-color: rgba(30, 136, 229, 0.1); padding: 20px; border-radius: 10px; margin-bottom: 20px;'>
+                <h2 style='color: #1E88E5; margin: 0;'>Journey Settings</h2>
             </div>
         """, unsafe_allow_html=True)
 
+        start_city = st.text_input("Starting City", "London")
+        start_country = st.text_input("Starting Country", "England")
+        max_days = st.slider("Maximum Days", 1, 80, 80)
 
-elif st.session_state.current_page == "Experience the Journey":
-    st.title("Around the World in 80 Days 🌍")
+        if st.button("Start Journey"):
+            st.session_state.journey_started = True
+            st.session_state.journey_time = datetime.now()
 
-    if st.sidebar.button("Start Journey"):
-        # Calculate journey result and save it to session state
+    if st.session_state.journey_started:
+        # Calculate journey
         result, min_time = travel_around_the_world(cities, start_city.lower(), start_country.lower(), max_days)
-        st.session_state['journey'] = result
-        st.session_state['min_time'] = min_time
 
-        # Display the journey with animations
-        image_placeholder = st.empty()
-        plane_placeholder = st.empty()
-        for city in result:
-            plane_placeholder.image("./animations/plane.gif", caption="Flying to the next city...",
-                                    use_container_width=True)
-            time.sleep(1.5)
-            plane_placeholder.empty()
-            photo_url = f"./city_photos/{city}.jpg"
-            image_placeholder.image(photo_url, caption=f"{city} photo", use_container_width=True)
+        # Create display containers
+        journey_container = st.container()
+        animation_container = st.empty()
+        info_container = st.container()
+
+        with journey_container:
+            create_journey_summary(min_time, len(result), start_city)
+
+        # Display journey progress
+        progress_bar, progress_text = create_progress_bar(0, len(result))
+
+        # Animate through cities
+        for idx, city in enumerate(result):
+            # Update progress
+            progress_bar.progress((idx + 1) / len(result))
+            progress_text.text(f"Journey Progress: {idx + 1}/{len(result)} cities visited")
+
+            # Display city image
+            try:
+                photo_path = f"./city_photos/{city.lower()}.jpg"
+                if os.path.exists(photo_path):
+                    animation_container.image(photo_path, caption=f"Welcome to {city.title()}",
+                                              use_container_width=True)
+                else:
+                    animation_container.error(f"Image for {city.title()} not found")
+            except Exception as e:
+                animation_container.error(f"Error displaying image: {str(e)}")
+
             time.sleep(2)
-            image_placeholder.empty()
 
-        if result[-1] == start_city.lower():
-            st.write("Journey complete!")
-            st.write(f"Total travel time: {round(min_time, 2)} days")
-            st.image("./situations/happy.jpg", use_container_width=True)
-        else:
-            st.write("Failed to travel the world.")
-            st.image("./situations/unhappy.jpg", use_container_width=True)
+        if result[-1].lower() == start_city.lower():
+            st.session_state.journey = result  # Store the journey data in session state
+            st.success(f"""
+                🎉 Congratulations! Journey Complete!
+                Total time: {min_time:.1f} days
+                Cities visited: {len(result)}
+                Starting point: {start_city.title()}
+            """)
+            journey_duration = datetime.now() - st.session_state.journey_time
+            st.info(f"Real-time journey presentation duration: {journey_duration.seconds} seconds")
 
-elif st.session_state.current_page == "See Your Travel on the Map":
-    st.title("Travel Path Map")
-    st.write("View the journey across the world on a map.")
-    journey = st.session_state.get('journey', None)  # Retrieve journey from session state
-    if journey:
-        ordered_travel_data = cities[cities['City'].isin(journey)]
-        ordered_travel_data = ordered_travel_data.set_index('City').loc[journey].reset_index()
-        lats = ordered_travel_data['Latitude'].tolist()
-        lons = ordered_travel_data['Longitude'].tolist()
+        # In "See Your Travel on the Map" section
+        elif st.session_state.current_page == "See Your Travel on the Map":
+            st.title("Travel Path Map")
+            st.write("View the journey across the world on a map.")
 
-        fig = go.Figure(go.Scattermapbox(
-            mode="markers+lines",
-            lon=lons,
-            lat=lats,
-            marker={'size': 8},
-            line=dict(width=2, color='blue'),
-            text=ordered_travel_data['City'],
-            hoverinfo="text"
-        ))
-        fig.update_layout(
-            mapbox_style="carto-positron",
-            mapbox_zoom=3,
-            mapbox_center={"lat": lats[0], "lon": lons[0]},
-            height=600
-        )
-        st.plotly_chart(fig)
-    else:
-        st.info("Please start a journey from the 'Experience the Journey' page first to see the travel path.")
+            if 'journey' in st.session_state and st.session_state.journey:
+                journey = st.session_state.journey  # Retrieve journey data from session state
+                ordered_travel_data = cities[cities['City'].isin(journey)]
+                ordered_travel_data = ordered_travel_data.set_index('City').loc[journey].reset_index()
+
+                fig = go.Figure(go.Scattermapbox(
+                    mode="markers+lines",
+                    lon=ordered_travel_data['Longitude'].tolist(),
+                    lat=ordered_travel_data['Latitude'].tolist(),
+                    marker={'size': 8},
+                    line=dict(width=2, color='blue'),
+                    text=ordered_travel_data['City'],
+                    hoverinfo="text"
+                ))
+
+                fig.update_layout(
+                    mapbox_style="carto-positron",
+                    mapbox_zoom=3,
+                    mapbox_center={"lat": ordered_travel_data['Latitude'].iloc[0],
+                                   "lon": ordered_travel_data['Longitude'].iloc[0]},
+                    height=600
+                )
+
+                st.plotly_chart(fig, use_container_width=True)
+            else:
+                st.info("Please start a journey from the 'Experience the Journey' page first to see the travel path.")
 
 elif st.session_state.current_page == "Population Map":
+    # Population map implementation remains the same as your original code
     cities_dataset = CitiesDataset('./worldcitiespop.csv', min_population=100000)
     cities_dataset.load_data()
     cities = cities_dataset.get_data()
