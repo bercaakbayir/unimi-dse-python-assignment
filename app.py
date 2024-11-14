@@ -208,36 +208,36 @@ elif st.session_state.current_page == "Experience the Journey":
             st.info(f"Real-time journey presentation duration: {journey_duration.seconds} seconds")
 
         # In "See Your Travel on the Map" section
-        elif st.session_state.current_page == "See Your Travel on the Map":
-            st.title("Travel Path Map")
-            st.write("View the journey across the world on a map.")
+elif st.session_state.current_page == "See Your Travel on the Map":
+    st.title("Travel Path Map")
+    st.write("View the journey across the world on a map.")
 
-            if st.session_state.journey_started and 'journey' in st.session_state and st.session_state.journey:
-                journey = st.session_state.journey  # Retrieve journey data from session state
-                ordered_travel_data = cities[cities['City'].isin(journey)]
-                ordered_travel_data = ordered_travel_data.set_index('City').loc[journey].reset_index()
+    if st.session_state.journey_started and 'journey' in st.session_state and st.session_state.journey:
+        journey = st.session_state.journey  # Retrieve journey data from session state
+        ordered_travel_data = cities[cities['City'].isin(journey)]
+        ordered_travel_data = ordered_travel_data.set_index('City').loc[journey].reset_index()
 
-                fig = go.Figure(go.Scattermapbox(
-                    mode="markers+lines",
-                    lon=ordered_travel_data['Longitude'].tolist(),
-                    lat=ordered_travel_data['Latitude'].tolist(),
-                    marker={'size': 8},
-                    line=dict(width=2, color='blue'),
-                    text=ordered_travel_data['City'],
-                    hoverinfo="text"
-                ))
+        fig = go.Figure(go.Scattermapbox(
+            mode="markers+lines",
+            lon=ordered_travel_data['Longitude'].tolist(),
+            lat=ordered_travel_data['Latitude'].tolist(),
+            marker={'size': 8},
+            line=dict(width=2, color='blue'),
+            text=ordered_travel_data['City'],
+            hoverinfo="text"
+        ))
 
-                fig.update_layout(
-                    mapbox_style="carto-positron",
-                    mapbox_zoom=3,
-                    mapbox_center={"lat": ordered_travel_data['Latitude'].iloc[0],
-                                   "lon": ordered_travel_data['Longitude'].iloc[0]},
-                    height=600
-                )
+        fig.update_layout(
+            mapbox_style="carto-positron",
+            mapbox_zoom=3,
+            mapbox_center={"lat": ordered_travel_data['Latitude'].iloc[0],
+                            "lon": ordered_travel_data['Longitude'].iloc[0]},
+            height=600
+        )
 
-                st.plotly_chart(fig, use_container_width=True)
-            else:
-                st.info("Please start a journey from the 'Experience the Journey' page first to see the travel path.")
+        st.plotly_chart(fig, use_container_width=True)
+    else:
+        st.info("Please start a journey from the 'Experience the Journey' page first to see the travel path.")
 
 elif st.session_state.current_page == "Population Map":
     # Population map implementation remains the same as your original code
