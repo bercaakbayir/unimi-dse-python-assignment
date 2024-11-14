@@ -212,7 +212,7 @@ elif st.session_state.current_page == "Experience the Journey":
             st.title("Travel Path Map")
             st.write("View the journey across the world on a map.")
 
-            if 'journey' in st.session_state and st.session_state.journey:
+            if st.session_state.journey_started and 'journey' in st.session_state and st.session_state.journey:
                 journey = st.session_state.journey  # Retrieve journey data from session state
                 ordered_travel_data = cities[cities['City'].isin(journey)]
                 ordered_travel_data = ordered_travel_data.set_index('City').loc[journey].reset_index()
