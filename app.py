@@ -190,7 +190,8 @@ elif st.session_state.current_page == "Experience the Journey":
                     animation_container.image(photo_path, caption=f"Welcome to {city.title()}",
                                               use_container_width=True)
                 else:
-                    animation_container.error(f"Image for {city.title()} not found")
+                    st.write(city.lower())
+                    continue
             except Exception as e:
                 animation_container.error(f"Error displaying image: {str(e)}")
 
