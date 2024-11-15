@@ -5,7 +5,7 @@ import streamlit as st
 import pandas as pd
 
 class CitiesDataset:
-    def __init__(self, file_path, min_population=7000000, exclude_city="delhi"):
+    def __init__(self, file_path, min_population=3000000, exclude_city="delhi"):
         self.file_path = file_path
         self.min_population = min_population
         self.exclude_city = exclude_city.lower()
