@@ -3,7 +3,53 @@ import numpy as np
 from typing import List, Tuple
 from src.helper import nearest_neighbors_algorithm, is_east, travel_time_calculator
 
-def travel_around_the_world(cities: pd.DataFrame, start_city_name: str, start_country: str, max_days: int = 80) -> Tuple[List[str], int]:
+def dfs_travel(cities, current_city, start_city, visited, total_hours, max_hours, path):
+    if total_hours > max_hours:
+        return None  # Exceeded time limit
+
+    # If we've returned to London and visited enough cities, we're done
+    if current_city['City'] == start_city['City'] and len(visited) > 1:
+        return path, total_hours
+
+    nearest_neighbors = nearest_neighbors_algorithm(cities)[current_city.name]
+
+    for idx, (neighbor, distance) in enumerate(nearest_neighbors):
+        if neighbor['City'] not in visited and is_east(current_city, neighbor):
+            travel_time = travel_time_calculator(current_city, neighbor, idx)
+            if total_hours + travel_time <= max_hours:
+                # Explore the next city
+                new_path = path + [neighbor['City']]
+                new_visited = visited | {neighbor['City']}
+                result = dfs_travel(
+                    cities, neighbor, start_city, new_visited, total_hours + travel_time, max_hours, new_path
+                )
+                if result is not None:
+                    return result  # Found a valid path
+
+    # Backtrack
+    return None
+
+
+def travel_around_the_world(cities: pd.DataFrame, start_city_name: str, start_country: str, max_days: int = 80):
+    start_city = cities[(cities['City'].str.lower() == start_city_name.lower()) &
+                        (cities['Country'].str.lower() == start_country.lower())].iloc[0]
+
+    max_hours = max_days * 24
+    visited = {start_city['City']}
+    path = [start_city['City']]
+    total_hours = 0
+
+    result = dfs_travel(cities, start_city, start_city, visited, total_hours, max_hours, path)
+
+    if result is None:
+        print("Failed to complete the trip within the allowed time.")
+        return [], 0
+    else:
+        travel_path, total_hours = result
+        print("Successfully traveled around the world!")
+        return travel_path, total_hours / 24
+
+"""def travel_around_the_world(cities: pd.DataFrame, start_city_name: str, start_country: str, max_days: int = 80) -> Tuple[List[str], int]:
 
     start_city = cities[(cities['City'].str.lower() == start_city_name.lower()) &
                         (cities['Country'].str.lower() == start_country.lower())].iloc[0]
@@ -40,7 +86,7 @@ def travel_around_the_world(cities: pd.DataFrame, start_city_name: str, start_co
         print("Successfully traveled around the world!")
 
     travel_path.insert(0, str(start_city.City))
-    return travel_path, total_hours/24
+    return travel_path, total_hours/24"""
 
 
 def AROUND_THE_WORLD_IN_80_DAYS(cities: pd.DataFrame) -> None:
