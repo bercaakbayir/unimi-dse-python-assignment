@@ -4,7 +4,6 @@ import time
 import plotly.graph_objects as go
 import geopandas as gpd
 import plotly.express as px
-from PIL import Image
 import os
 from datetime import datetime
 from src.helper import CitiesDataset
