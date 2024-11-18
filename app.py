@@ -103,7 +103,7 @@ def create_transition_animation(animation_container):
 
 
 # Navigation menu
-menu_items = ["Welcome", "Experience the Journey", "See Your Travel on the Map", "Population Map", "General Statistics"]
+menu_items = ["Welcome", "Experience the Journey", "See Your Travel on the Map", "General Statistics", "Population Map"]
 cols = st.columns(len(menu_items))
 for idx, page in enumerate(menu_items):
     if cols[idx].button(page):
@@ -243,76 +243,6 @@ elif st.session_state.current_page == "See Your Travel on the Map":
         st.info("Please start a journey from the 'Experience the Journey' page first to see the travel path.")
 
 
-elif st.session_state.current_page == "Population Map":
-    # Population map implementation remains the same as your original code
-    cities_dataset = CitiesDataset('./worldcitiespop.csv', min_population=100000)
-    cities_dataset.load_data()
-    cities = cities_dataset.get_data()
-
-    print('Population' in cities.columns)
-
-    world_geojson = gpd.read_file("./ne_110m_admin_0_countries/ne_110m_admin_0_countries.shp")
-    world_geojson = world_geojson.merge(cities, how="left", left_on="ADMIN", right_on="Country")
-
-    print('Population' in world_geojson.columns)
-
-    try:
-        fig = px.choropleth(
-            world_geojson,
-            geojson=world_geojson.geometry,
-            locations=world_geojson.Country,
-            color="Population",
-            color_continuous_scale="Viridis",
-            title="Population Distribution by Country",
-            labels={'Population': 'Country Population'},
-            projection="mercator"
-        )
-
-        fig.update_geos(fitbounds="locations", visible=False)
-        st.plotly_chart(fig, use_container_width=True)
-
-    except Exception as e:
-        st.error(e)
-
-
-
-    st.subheader("Explore Population by Country")
-    selected_country = st.selectbox("Select a Country", cities['Country'].unique())
-
-    if selected_country:
-        country_geojson = world_geojson[world_geojson['Country'] == selected_country]
-        country_cities = cities[cities['Country'] == selected_country]
-
-        fig_country = px.choropleth(
-            country_geojson,
-            geojson=country_geojson.geometry,
-            locations=country_geojson.index,
-            color="Population",
-            color_continuous_scale="Viridis",
-            labels={'Population': 'Country Population'},
-            title=f"Population in {selected_country}"
-        )
-
-        fig_country.update_geos(fitbounds="locations", visible=False)
-
-        fig_country.add_scattergeo(
-            lon=country_cities['Longitude'],
-            lat=country_cities['Latitude'],
-            text=country_cities['City'] + ": " + country_cities['Population'].astype(str),
-            marker=dict(
-                size=country_cities['Population'] / country_cities['Population'].max() * 50,
-                color=country_cities['Population'],
-                colorscale="Reds",
-                showscale=True,
-                colorbar_title="City Population"
-            ),
-            name="Cities"
-        )
-
-        st.plotly_chart(fig_country, use_container_width=True)
-        st.write(f"### Population Statistics for {selected_country}")
-        country_population = cities[cities['Country'] == selected_country]['Population'].sum()
-        st.metric(label="Total Population", value=f"{country_population:,}")
 
 elif st.session_state.current_page == "General Statistics":
 
@@ -384,4 +314,76 @@ elif st.session_state.current_page == "General Statistics":
         file_name='filtered_data.csv',
         mime='text/csv',
     )
+
+
+elif st.session_state.current_page == "Population Map":
+    # Population map implementation remains the same as your original code
+    cities_dataset = CitiesDataset('./worldcitiespop.csv', min_population=100000)
+    cities_dataset.load_data()
+    cities = cities_dataset.get_data()
+
+    print('Population' in cities.columns)
+
+    world_geojson = gpd.read_file("./ne_110m_admin_0_countries/ne_110m_admin_0_countries.shp")
+    world_geojson = world_geojson.merge(cities, how="left", left_on="ADMIN", right_on="Country")
+
+    print('Population' in world_geojson.columns)
+
+    try:
+        fig = px.choropleth(
+            world_geojson,
+            geojson=world_geojson.geometry,
+            locations=world_geojson.Country,
+            color="Population",
+            color_continuous_scale="Viridis",
+            title="Population Distribution by Country",
+            labels={'Population': 'Country Population'},
+            projection="mercator"
+        )
+
+        fig.update_geos(fitbounds="locations", visible=False)
+        st.plotly_chart(fig, use_container_width=True)
+
+    except Exception as e:
+        st.error(e)
+
+
+
+    st.subheader("Explore Population by Country")
+    selected_country = st.selectbox("Select a Country", cities['Country'].unique())
+
+    if selected_country:
+        country_geojson = world_geojson[world_geojson['Country'] == selected_country]
+        country_cities = cities[cities['Country'] == selected_country]
+
+        fig_country = px.choropleth(
+            country_geojson,
+            geojson=country_geojson.geometry,
+            locations=country_geojson.index,
+            color="Population",
+            color_continuous_scale="Viridis",
+            labels={'Population': 'Country Population'},
+            title=f"Population in {selected_country}"
+        )
+
+        fig_country.update_geos(fitbounds="locations", visible=False)
+
+        fig_country.add_scattergeo(
+            lon=country_cities['Longitude'],
+            lat=country_cities['Latitude'],
+            text=country_cities['City'] + ": " + country_cities['Population'].astype(str),
+            marker=dict(
+                size=country_cities['Population'] / country_cities['Population'].max() * 50,
+                color=country_cities['Population'],
+                colorscale="Reds",
+                showscale=True,
+                colorbar_title="City Population"
+            ),
+            name="Cities"
+        )
+
+        st.plotly_chart(fig_country, use_container_width=True)
+        st.write(f"### Population Statistics for {selected_country}")
+        country_population = cities[cities['Country'] == selected_country]['Population'].sum()
+        st.metric(label="Total Population", value=f"{country_population:,}")
 
