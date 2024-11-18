@@ -113,6 +113,7 @@ class CitiesDataset:
     def filter_data(self):
         """Filter cities based on population and exclude specified city."""
         self.data = self.data.dropna()
+        self.data = self.data[self.data['City'].str.lower() != self.exclude_city]
         self.data = self.data[self.data['Population'] > self.min_population]
 
     def get_data(self):
