@@ -182,6 +182,8 @@ elif st.session_state.current_page == "Experience the Journey":
             progress_bar.progress((idx + 1) / len(result))
             progress_text.text(f"Journey Progress: {idx + 1}/{len(result)} cities visited")
 
+            create_transition_animation(animation_container)
+
             # Display city image
             try:
                 photo_path = f"./city_photos/{city.lower()}.jpg"
