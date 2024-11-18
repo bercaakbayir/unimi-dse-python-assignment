@@ -2,6 +2,7 @@ import math
 from typing import List, Tuple, Dict
 import pandas as pd
 
+
 class CitiesDataset:
     def __init__(self, file_path, min_population=7000000, exclude_city="delhi"):
         self.file_path = file_path

@@ -7,6 +7,7 @@ import plotly.express as px
 import os
 from datetime import datetime
 from src.helper import CitiesDataset
+import numpy as np
 
 # Configure the page settings
 st.set_page_config(layout="wide", page_title="Around the World Adventure", page_icon="🌍")
@@ -102,7 +103,7 @@ def create_transition_animation(animation_container):
 
 
 # Navigation menu
-menu_items = ["Welcome", "Experience the Journey", "See Your Travel on the Map", "Population Map"]
+menu_items = ["Welcome", "Experience the Journey", "See Your Travel on the Map", "Population Map", "General Statistics"]
 cols = st.columns(len(menu_items))
 for idx, page in enumerate(menu_items):
     if cols[idx].button(page):
@@ -241,28 +242,39 @@ elif st.session_state.current_page == "See Your Travel on the Map":
     else:
         st.info("Please start a journey from the 'Experience the Journey' page first to see the travel path.")
 
+
 elif st.session_state.current_page == "Population Map":
     # Population map implementation remains the same as your original code
     cities_dataset = CitiesDataset('./worldcitiespop.csv', min_population=100000)
     cities_dataset.load_data()
     cities = cities_dataset.get_data()
 
+    print('Population' in cities.columns)
+
     world_geojson = gpd.read_file("./ne_110m_admin_0_countries/ne_110m_admin_0_countries.shp")
     world_geojson = world_geojson.merge(cities, how="left", left_on="ADMIN", right_on="Country")
 
-    fig = px.choropleth(
-        world_geojson,
-        geojson=world_geojson.geometry,
-        locations=world_geojson.Country,
-        color="Population",
-        color_continuous_scale="Viridis",
-        title="Population Distribution by Country",
-        labels={'Population': 'Country Population'},
-        projection="mercator"
-    )
+    print('Population' in world_geojson.columns)
 
-    fig.update_geos(fitbounds="locations", visible=False)
-    st.plotly_chart(fig, use_container_width=True)
+    try:
+        fig = px.choropleth(
+            world_geojson,
+            geojson=world_geojson.geometry,
+            locations=world_geojson.Country,
+            color="Population",
+            color_continuous_scale="Viridis",
+            title="Population Distribution by Country",
+            labels={'Population': 'Country Population'},
+            projection="mercator"
+        )
+
+        fig.update_geos(fitbounds="locations", visible=False)
+        st.plotly_chart(fig, use_container_width=True)
+
+    except Exception as e:
+        st.error(e)
+
+
 
     st.subheader("Explore Population by Country")
     selected_country = st.selectbox("Select a Country", cities['Country'].unique())
@@ -301,3 +313,75 @@ elif st.session_state.current_page == "Population Map":
         st.write(f"### Population Statistics for {selected_country}")
         country_population = cities[cities['Country'] == selected_country]['Population'].sum()
         st.metric(label="Total Population", value=f"{country_population:,}")
+
+elif st.session_state.current_page == "General Statistics":
+
+    cities_dataset = CitiesDataset('./worldcitiespop.csv', min_population=0)
+    cities_dataset.load_data()
+    cities = cities_dataset.get_data()
+
+    st.title("City Population Statistics")
+
+    # Summary Statistics using NumPy
+    st.header("Summary Statistics")
+    total_cities = len(cities)
+    avg_population = np.mean(cities['Population'])
+    max_population = np.max(cities['Population'])
+    min_population = np.min(cities['Population'])
+    median_population = np.median(cities['Population'])
+    std_population = np.std(cities['Population'])
+
+    # Display metrics
+    col1, col2, col3 = st.columns(3)
+    col1.metric("Total Cities", f"{total_cities}")
+    col2.metric("Average Population", f"{avg_population:.2f}")
+    col3.metric("Max Population", f"{max_population}")
+
+    col4, col5 = st.columns(2)
+    col4.metric("Median Population", f"{median_population:.2f}")
+    col5.metric("Std. Deviation", f"{std_population:.2f}")
+
+    # Filters
+    st.sidebar.header("Filters")
+    countries = st.sidebar.multiselect("Select Country", options=cities['Country'].unique(),
+                                       default=cities['Country'].unique())
+    population_range = st.sidebar.slider(
+        "Population Range",
+        int(np.min(cities['Population'])),
+        int(np.max(cities['Population'])),
+        (int(np.min(cities['Population'])), int(np.max(cities['Population'])))
+    )
+
+    filtered_data = cities[(cities['Country'].isin(countries)) & (cities['Population'].between(*population_range))]
+
+    # Data Overview
+    st.header("Filtered Data Overview")
+    st.write(f"Filtered Cities: {len(filtered_data)}")
+    st.dataframe(filtered_data)
+
+    # Population Distribution
+    st.header("Population Distribution")
+    fig = px.histogram(filtered_data, x='Population', nbins=50, title="Population Distribution")
+    st.plotly_chart(fig)
+
+    # Top Cities by Population
+    st.header("Top Cities by Population")
+    top_cities = filtered_data.sort_values('Population', ascending=False).head(10)
+    fig = px.bar(top_cities, x='City', y='Population', title="Top 10 Cities by Population")
+    st.plotly_chart(fig)
+
+    # Geographic Distribution
+    st.header("City Locations")
+    fig = px.scatter_geo(filtered_data, lat='Latitude', lon='Longitude', hover_name='City', size='Population',
+                         title="Geographic Distribution of Cities")
+    st.plotly_chart(fig)
+
+    # Downloadable Data
+    st.header("Download Data")
+    st.download_button(
+        label="Download Filtered Data as CSV",
+        data=filtered_data.to_csv(index=False).encode('utf-8'),
+        file_name='filtered_data.csv',
+        mime='text/csv',
+    )
+
