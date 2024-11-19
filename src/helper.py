@@ -181,6 +181,7 @@ class CitiesDataset:
     def transform_columns(self):
         """Replace country codes with full country names."""
         self.data['Country'] = self.data['Country'].replace(self.countries)
+        self.data['Population'] = self.data['Population'].astype('int')
 
     def filter_data(self):
         """Filter cities based on population and exclude specified city."""
