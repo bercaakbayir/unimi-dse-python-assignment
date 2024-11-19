@@ -1,18 +1,25 @@
-import streamlit as st
-from world_travel import travel_around_the_world
-import time
-import plotly.graph_objects as go
-import geopandas as gpd
-import plotly.express as px
 import os
-from datetime import datetime
-from src.helper import CitiesDataset
+import time
 import numpy as np
+import streamlit as st
+import plotly.express as px
+from datetime import datetime
+import plotly.graph_objects as go
+from dotenv import load_dotenv
 
-# Configure the page settings
+from src.helper import CitiesDataset
+from world_travel import travel_around_the_world
+
+load_dotenv()
+
+DATA_FILE_PATH = os.getenv("DATA_FILE_PATH")
+START_CITY = os.getenv("START_CITY")
+START_COUNTRY = os.getenv("START_COUNTRY")
+MAX_DAY_THRESHOLD = int(os.getenv("MAX_DAY_THRESHOLD"))
+
+
 st.set_page_config(layout="wide", page_title="Around the World Adventure", page_icon="🌍")
 
-# Custom CSS for styling
 st.markdown("""
     <style>
     .stButton button {
@@ -110,7 +117,7 @@ for idx, page in enumerate(menu_items):
         st.session_state.current_page = page
 
 # Load cities dataset
-cities_dataset = CitiesDataset('./worldcitiespop.csv')
+cities_dataset = CitiesDataset(DATA_FILE_PATH)
 cities_dataset.load_data()
 cities = cities_dataset.get_data()
 
@@ -154,9 +161,9 @@ elif st.session_state.current_page == "Experience the Journey":
             </div>
         """, unsafe_allow_html=True)
 
-        start_city = st.text_input("Starting City", "London")
-        start_country = st.text_input("Starting Country", "England")
-        max_days = st.slider("Maximum Days", 1, 80, 80)
+        start_city = st.text_input("Starting City", START_CITY)
+        start_country = st.text_input("Starting Country", START_COUNTRY)
+        max_days = st.slider("Maximum Days", 1, 80, MAX_DAY_THRESHOLD)
 
         if st.button("Start Journey"):
             st.session_state.journey_started = True
@@ -243,10 +250,9 @@ elif st.session_state.current_page == "See Your Travel on the Map":
         st.info("Please start a journey from the 'Experience the Journey' page first to see the travel path.")
 
 
-
 elif st.session_state.current_page == "General Statistics":
 
-    cities_dataset = CitiesDataset('./worldcitiespop.csv', min_population=0)
+    cities_dataset = CitiesDataset(DATA_FILE_PATH, min_population=0)
     cities_dataset.load_data()
     cities = cities_dataset.get_data()
 

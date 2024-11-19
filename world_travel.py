@@ -1,8 +1,6 @@
 import pandas as pd
-import numpy as np
 from typing import List, Tuple
-from src.helper import nearest_neighbors_algorithm, is_east, travel_time_calculator
-
+from src.helper import nearest_neighbors_algorithm, travel_time_calculator
 
 
 def travel_around_the_world(cities: pd.DataFrame, start_city_name: str, start_country: str, max_days: int = 80) -> Tuple[List[str], int]:

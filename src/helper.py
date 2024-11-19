@@ -1,180 +1,38 @@
 import math
-from typing import List, Tuple, Dict
-import pandas as pd
+import os
 
+import pandas as pd
+from typing import List, Tuple, Dict
+from dotenv import load_dotenv
+import json
+
+load_dotenv()
+
+MINIMUM_POPULATION = int(os.getenv("MINIMUM_POPULATION"))
+EXCLUDED_CITY = os.getenv("EXCLUDED_CITY")
+COUNTRIES_DICT = os.getenv("COUNTRIES")
+
+
+if COUNTRIES_DICT:
+    try:
+        countries = json.loads(COUNTRIES_DICT)
+    except json.JSONDecodeError:
+        print("The environment variable is not a valid JSON string.")
+else:
+    print("Environment variable 'MY_DICT' is not set.")
 
 class CitiesDataset:
-    def __init__(self, file_path, min_population=7000000, exclude_city="delhi"):
+    def __init__(self, file_path, min_population=MINIMUM_POPULATION, exclude_city=EXCLUDED_CITY):
         self.file_path = file_path
         self.min_population = min_population
         self.exclude_city = exclude_city.lower()
-        self.countries = {
-            "ae": "United Arab Emirates",
-            "af": "Afghanistan",
-            "am": "Armenia",
-            "ao": "Angola",
-            "ar": "Argentina",
-            "at": "Austria",
-            "au": "Australia",
-            "az": "Azerbaijan",
-            "bd": "Bangladesh",
-            "be": "Belgium",
-            "bf": "Burkina Faso",
-            "bg": "Bulgaria",
-            "br": "Brazil",
-            "by": "Belarus",
-            "ca": "Canada",
-            "cd": "Democratic Congo Republic",
-            "cg": "Congo",
-            "ci": "Ivory Coast",
-            "cl": "Chile",
-            "cm": "Cameroon",
-            "cn": "China",
-            "co": "Colombia",
-            "cz": "Czech Republic",
-            "de": "Germany",
-            "dk": "Denmark",
-            "do": "Dominican Republic",
-            "dz": "Algeria",
-            "ec": "Ecuador",
-            "eg": "Egypt",
-            "es": "Spain",
-            "et": "Ethiopia",
-            "fr": "France",
-            "gb": "England",
-            "ge": "Georgia",
-            "gh": "Ghana",
-            "gn": "Konri",
-            "ht": "Haiti",
-            "hu": "Hungary",
-            "id": "Indonesia",
-            "ie": "Ireland",
-            "in": "India",
-            "iq": "Iraq",
-            "ir": "Iran",
-            "it": "Italy",
-            "jp": "Japan",
-            "ke": "Kenya",
-            "kh": "Cambodia",
-            "kr": "Korea",
-            "kz": "Kazakhstan",
-            "lb": "Lebanon",
-            "ly": "Libya",
-            "ma": "Morocco",
-            "mg": "Madagascar",
-            "ml": "Mali",
-            "mm": "Myanmar",
-            "mx": "Mexico",
-            "my": "Malaysia",
-            "mz": "Mozambique",
-            "ng": "Nigeria",
-            "ni": "Nicaragua",
-            "pe": "Peru",
-            "ph": "Philippines",
-            "pk": "Pakistan",
-            "pl": "Poland",
-            "ro": "Romania",
-            "rs": "Serbia",
-            "ru": "Russia",
-            "sa": "Saudi Arabia",
-            "sd": "Sudan",
-            "se": "Sweden",
-            "sg": "Singapore",
-            "sl": "Sierra Leone",
-            "sn": "Senegal",
-            "so": "Somalia",
-            "sy": "Syria",
-            "th": "Thailand",
-            "tr": "Turkiye",
-            "tw": "Taiwan",
-            "tz": "Tanzania",
-            "ua": "Ukrainian",
-            "ug": "Uganda",
-            "us": "United States of America",
-            "uy": "Uruguay",
-            "uz": "Uzbekistan",
-            "ve": "Venezuela",
-            "vn": "Vietnam",
-            "za": "South Africa",
-            "zm": "Zambia",
-            "zw": "Zimbabwe",
-            "ad": "Andorra",
-            "ag": "Antigua & Barbuda",
-            "al": "Albania",
-            "ba": "Bosnia and Herzegovina",
-            "bh": "Bahrain",
-            "bi": "Burundi",
-            "bj": "Benin",
-            "bo": "Bolivia",
-            "bs": "Bahamas",
-            "bw": "Botsvana",
-            "cf": "Central African Republic",
-            "ch": "Switzerland",
-            "cr": "Costa Rica",
-            "cu": "Cuba",
-            "cv": "Cape Verde",
-            "cy": "South Cyprus",
-            "dj": "Cibuti",
-            "ee": "Estonia",
-            "er": "Eritre",
-            "fi": "Finland",
-            "ga": "Gabon",
-            "gm": "Gambia",
-            "gq": "Equatorial Guinea",
-            "gr": "Greece",
-            "gt": "Guatemala",
-            "gw": "Gine Bissau",
-            "gy": "Malaysia",
-            "hn": "Honduras",
-            "hr": "Crotia",
-            "il": "Israel",
-            "is": "Iceland",
-            "jm": "Jamaica",
-            "jo": "Jordan",
-            "la": "Laos",
-            "lk": "Sri Lanka",
-            "lr": "Liberia",
-            "ls": "Lesotho",
-            "lt": "Litvania",
-            "lv": "Latvia",
-            "md": "Moldavia",
-            "me": "Montenegro",
-            "mk": "North Mecedonia",
-            "mn": "Mongolia",
-            "mr": "Moritania",
-            "mu": "Mauritius",
-            "mw": "Malavi",
-            "na": "Namibia",
-            "ne": "Niger",
-            "nl": "Netherland",
-            "no": "Norway",
-            "np": "Nepal",
-            "nz": "New Zeland",
-            "om": "Oman",
-            "pa": "Panama",
-            "pg": "Papua New Ginea",
-            "pt": "Portugal",
-            "py": "Paraguay",
-            "qa": "Qatar",
-            "re": "Saint-Denis",
-            "rw": "Ruanda",
-            "si": "Slovenia",
-            "sk": "Slovakia",
-            "sr": "Surinam",
-            "sv": "San Salvador",
-            "sz": "Swaziland",
-            "td": "Chad",
-            "tg": "Togo",
-            "tj": "Tajikistan",
-            "tm": "Turkmenistan",
-            "tn": "Tunusia",
-            "ye": "Yemen"
-        }
+        self.countries = countries
         self.data = None
 
     def load_data(self):
         """Load the dataset from a CSV file."""
         self.data = pd.read_csv(self.file_path, dtype={3: str})
+        self.data = self.data.dropna()
         self.transform_columns()
         self.filter_data()
 
@@ -185,7 +43,6 @@ class CitiesDataset:
 
     def filter_data(self):
         """Filter cities based on population and exclude specified city."""
-        self.data = self.data.dropna()
         self.data = self.data[self.data['City'].str.lower() != self.exclude_city]
         self.data = self.data[self.data['Population'] > self.min_population]
 
