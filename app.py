@@ -5,6 +5,7 @@ import streamlit as st
 import plotly.express as px
 from datetime import datetime
 import plotly.graph_objects as go
+import matplotlib.pyplot as plt
 from dotenv import load_dotenv
 
 from src.helper import CitiesDataset
@@ -308,9 +309,29 @@ elif st.session_state.current_page == "General Statistics":
 
     # Geographic Distribution
     st.header("City Locations")
-    fig = px.scatter_geo(filtered_data, lat='Latitude', lon='Longitude', hover_name='City', size='Population',
-                         title="Geographic Distribution of Cities")
-    st.plotly_chart(fig)
+    fig, ax = plt.subplots(figsize=(10, 6))
+
+    # Plot the scatter points for city locations
+    ax.scatter(
+        filtered_data['Longitude'],
+        filtered_data['Latitude'],
+        s=filtered_data['Population'] / filtered_data['Population'].max() * 100,  # Normalize size
+        alpha=0.6,
+        c='red',
+        label='Cities'
+    )
+
+    # Add grid, labels, and title
+    ax.set_xlabel("Longitude")
+    ax.set_ylabel("Latitude")
+    ax.set_title("Geographic Distribution of Cities", fontsize=14)
+    ax.grid(True)
+
+    # Add legend
+    ax.legend(loc='lower left')
+
+    # Display the static map
+    st.pyplot(fig)
 
 
 

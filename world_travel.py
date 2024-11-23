@@ -5,6 +5,7 @@ from src.helper import nearest_neighbors_algorithm, travel_time_calculator
 
 def travel_around_the_world(cities: pd.DataFrame, start_city_name: str, start_country: str, max_days: int = 80) -> Tuple[List[str], int]:
 
+
     start_city = cities[(cities['City'].str.lower() == start_city_name.lower()) &
                         (cities['Country'].str.lower() == start_country.lower())].iloc[0]
 

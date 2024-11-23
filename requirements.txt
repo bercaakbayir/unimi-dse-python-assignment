@@ -4,3 +4,4 @@ streamlit
 geopandas
 plotly
 python-dotenv
+matplotlib
