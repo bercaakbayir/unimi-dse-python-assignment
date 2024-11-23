@@ -124,11 +124,17 @@ cities = cities_dataset.get_data()
 
 # Page content
 if st.session_state.current_page == "Welcome":
+
+    st.logo(
+        "./logos/unimi-dse.png",
+        size="large",
+        link="https://www.unimi.it/en/education/master-programme/data-science-economics-dse",
+    )
+
     st.markdown(
         """
         <style>
         .stApp {
-            background-image: url("./wallpapers/world.webp");
             background-size: cover;
             background-position: center;
         }
@@ -140,12 +146,13 @@ if st.session_state.current_page == "Welcome":
     st.markdown("""
         <div class="welcome-text">
             <h1>Welcome to Around the World in 80 Days 🌍</h1>
-            <p>Embark on an extraordinary journey around the globe, following in the footsteps of Phileas Fogg!</p>
+            <p>Have you ever placed a bet on whether it is possible to travel around the world in 80 days? Your answer is on this website!</p>
+            <p>Learn about the cities you will visit while creating the most suitable route for your world tour!</p>
             <p>Use the navigation menu above to:</p>
             <ul>
-                <li>Experience your journey through city photos</li>
+                <li>Experience your journey while creating your world tour route!</li>
                 <li>Track your route on an interactive map</li>
-                <li>Explore population data across the world</li>
+                <li>Explore general statistics across the world</li>
             </ul>
             <p>Begin your adventure by selecting "Experience the Journey" above!</p>
         </div>
