@@ -5,6 +5,7 @@ import pandas as pd
 from typing import List, Tuple, Dict
 from dotenv import load_dotenv
 import json
+import streamlit as st
 
 load_dotenv()
 
@@ -21,6 +22,23 @@ if COUNTRIES_DICT:
 else:
     print("Environment variable 'MY_DICT' is not set.")
 
+@st.cache_data
+def load_and_preprocess_data(file_path, countries, min_population, exclude_city):
+    """Load and preprocess data with caching."""
+    data = pd.read_csv(file_path, dtype={3: str})
+    data = data.dropna()
+
+    # Process columns
+    data['Country'] = data['Country'].replace(countries)
+    data['Population'] = data['Population'].astype('int')
+
+    # Filter data
+    data = data[data['City'].str.lower() != exclude_city]
+    data = data[data['Population'] > min_population]
+
+    return data
+
+
 class CitiesDataset:
     def __init__(self, file_path, min_population=MINIMUM_POPULATION, exclude_city=EXCLUDED_CITY):
         self.file_path = file_path
@@ -30,27 +48,16 @@ class CitiesDataset:
         self.data = None
 
     def load_data(self):
-        """Load the dataset from a CSV file."""
-        self.data = pd.read_csv(self.file_path, dtype={3: str})
-        self.data = self.data.dropna()
-        self.transform_columns()
-        self.filter_data()
-
-    def transform_columns(self):
-        """Replace country codes with full country names."""
-        self.data['Country'] = self.data['Country'].replace(self.countries)
-        self.data['Population'] = self.data['Population'].astype('int')
-
-    def filter_data(self):
-        """Filter cities based on population and exclude specified city."""
-        self.data = self.data[self.data['City'].str.lower() != self.exclude_city]
-        self.data = self.data[self.data['Population'] > self.min_population]
+        """Load the dataset using the cached function."""
+        if self.data is None:
+            self.data = load_and_preprocess_data(
+                self.file_path, self.countries, self.min_population, self.exclude_city
+            )
+        return self.data
 
     def get_data(self):
         """Return the processed dataset."""
-        if self.data is None:
-            self.load_data()
-        return self.data
+        return self.load_data()
 
 
 def haversine(lat1, lon1, lat2, lon2):
