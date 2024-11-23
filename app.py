@@ -126,7 +126,7 @@ cities = cities_dataset.get_data()
 if st.session_state.current_page == "Welcome":
 
     st.logo(
-        "./logos/unimi-dse.png",
+        "./images/logos/unimi-dse.png",
         size="large",
         link="https://www.unimi.it/en/education/master-programme/data-science-economics-dse",
     )
@@ -209,7 +209,7 @@ elif st.session_state.current_page == "Experience the Journey":
 
             # Display city image
             try:
-                photo_path = f"./city_photos/{city.lower()}.jpg"
+                photo_path = f"./images/city_photos/{city.lower()}.jpg"
                 if os.path.exists(photo_path):
                     animation_container.image(photo_path, caption=f"Welcome to {city.title()}",
                                               use_container_width=True)
