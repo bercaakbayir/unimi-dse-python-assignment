@@ -179,7 +179,14 @@ elif st.session_state.current_page == "Experience the Journey":
 
     if st.session_state.journey_started:
         # Calculate journey
-        result, min_time = travel_around_the_world(cities, start_city.lower(), start_country.lower(), max_days)
+
+        try:
+            result, min_time = travel_around_the_world(cities, start_city.lower(), start_country.lower(), max_days)
+        except IndexError:
+            st.error('You entered the Starting City and/or Starting Country parameter incorrectly.')
+        except Exception as e:
+            st.error('Sorry, we are not able to service you right now! Thank you for your patience.')
+
 
         # Create display containers
         journey_container = st.container()
@@ -224,6 +231,8 @@ elif st.session_state.current_page == "Experience the Journey":
             """)
             journey_duration = datetime.now() - st.session_state.journey_time
             st.info(f"Real-time journey presentation duration: {journey_duration.seconds} seconds")
+        else:
+            st.error(f"☹️Journey completed in the given time...")
 
         # In "See Your Travel on the Map" section
 elif st.session_state.current_page == "See Your Travel on the Map":
