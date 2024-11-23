@@ -68,7 +68,6 @@ if 'journey_started' not in st.session_state:
     st.session_state.journey_started = False
 
 
-# Helper functions
 def create_progress_bar(current, total):
     progress_bar = st.progress(0)
     progress_text = st.empty()
@@ -110,7 +109,6 @@ def create_transition_animation(animation_container):
         animation_container.empty()
 
 
-# Navigation menu
 menu_items = ["Welcome", "Experience the Journey", "See Your Travel on the Map", "General Statistics"]
 cols = st.columns(len(menu_items))
 for idx, page in enumerate(menu_items):
@@ -161,7 +159,6 @@ if st.session_state.current_page == "Welcome":
 elif st.session_state.current_page == "Experience the Journey":
     st.title("Around the World Adventure 🌍")
 
-    # Sidebar configuration
     with st.sidebar:
         st.markdown("""
             <div style='background-color: rgba(30, 136, 229, 0.1); padding: 20px; border-radius: 10px; margin-bottom: 20px;'>
@@ -178,7 +175,6 @@ elif st.session_state.current_page == "Experience the Journey":
             st.session_state.journey_time = datetime.now()
 
     if st.session_state.journey_started:
-        # Calculate journey
 
         try:
             result, min_time = travel_around_the_world(cities, start_city.lower(), start_country.lower(), max_days)
@@ -188,7 +184,6 @@ elif st.session_state.current_page == "Experience the Journey":
             st.error('Sorry, we are not able to service you right now! Thank you for your patience.')
 
 
-        # Create display containers
         journey_container = st.container()
         animation_container = st.empty()
         info_container = st.container()
@@ -196,10 +191,8 @@ elif st.session_state.current_page == "Experience the Journey":
         with journey_container:
             create_journey_summary(min_time, len(result), start_city)
 
-        # Display journey progress
         progress_bar, progress_text = create_progress_bar(0, len(result))
 
-        # Animate through cities
         for idx, city in enumerate(result):
             # Update progress
             progress_bar.progress((idx + 1) / len(result))
@@ -234,7 +227,6 @@ elif st.session_state.current_page == "Experience the Journey":
         else:
             st.error(f"☹️Journey completed in the given time...")
 
-        # In "See Your Travel on the Map" section
 elif st.session_state.current_page == "See Your Travel on the Map":
     st.title("Travel Path Map")
     st.write("View the journey across the world on a map.")
@@ -288,7 +280,6 @@ elif st.session_state.current_page == "General Statistics":
     top_cities = country_data.sort_values('Population', ascending=False).head(3)
 
 
-    # Display metrics
     col1, col2, col3 = st.columns(3)
     col1.metric("Total Settlements", f"{total_cities}")
     col2.metric("Total Population", f"{sum_population}")
@@ -302,7 +293,6 @@ elif st.session_state.current_page == "General Statistics":
     for index, city in top_cities.iterrows():
         st.write(f"{city['AccentCity']} : {city['Population']:,}")
 
-    # Filters
     st.sidebar.header("Filters")
     countries = st.sidebar.multiselect("Select Country", options=cities['Country'].unique(),
                                        default=cities['Country'].unique())
@@ -315,24 +305,18 @@ elif st.session_state.current_page == "General Statistics":
 
     filtered_data = cities[(cities['Country'].isin(countries)) & (cities['Population'].between(*population_range))]
 
-    # Data Overview
     st.header("Filtered Data Overview")
     st.write(f"Filtered Cities: {len(filtered_data)}")
     st.dataframe(filtered_data)
 
-    # Population Distribution
-    st.header("Population Distribution")
-    fig = px.histogram(filtered_data, x='Population', nbins=50, title="Population Distribution")
+    st.header("Population Statistics")
+    fig = px.histogram(filtered_data, x='Population', nbins=50, title="Population Distribution of Cities in All World")
     st.plotly_chart(fig)
 
-    # Top Cities by Population
-    st.header("Top Cities by Population")
     top_cities = filtered_data.sort_values('Population', ascending=False).head(10)
     fig = px.bar(top_cities, x='City', y='Population', title="Top 10 Cities by Population")
     st.plotly_chart(fig)
 
-    # Geographic Distribution
-    st.header("City Locations")
     fig, ax = plt.subplots(figsize=(10, 6))
 
     # Plot the scatter points for city locations
