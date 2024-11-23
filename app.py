@@ -275,24 +275,32 @@ elif st.session_state.current_page == "General Statistics":
 
     st.title("City Population Statistics")
 
-    # Summary Statistics using NumPy
     st.header("Summary Statistics")
-    total_cities = len(cities)
-    avg_population = np.mean(cities['Population'])
-    max_population = np.max(cities['Population'])
-    min_population = np.min(cities['Population'])
-    median_population = np.median(cities['Population'])
-    std_population = np.std(cities['Population'])
+    selected_country = st.selectbox("Select Country", options=cities['Country'].unique())
+    country_data = cities[cities['Country'] == selected_country]
+
+    total_cities = len(country_data)
+    sum_population = np.sum(country_data['Population'])
+    max_population = np.max(country_data['Population'])
+    min_population = np.min(country_data['Population'])
+    median_population = np.median(country_data['Population'])
+    std_population = np.std(country_data['Population'])
+    top_cities = country_data.sort_values('Population', ascending=False).head(3)
+
 
     # Display metrics
     col1, col2, col3 = st.columns(3)
-    col1.metric("Total Cities", f"{total_cities}")
-    col2.metric("Average Population", f"{avg_population:.2f}")
+    col1.metric("Total Settlements", f"{total_cities}")
+    col2.metric("Total Population", f"{sum_population}")
     col3.metric("Max Population", f"{max_population}")
 
     col4, col5 = st.columns(2)
     col4.metric("Median Population", f"{median_population:.2f}")
     col5.metric("Std. Deviation", f"{std_population:.2f}")
+
+    st.subheader("Top 3 Most Populous Cities")
+    for index, city in top_cities.iterrows():
+        st.write(f"{city['AccentCity']} : {city['Population']:,}")
 
     # Filters
     st.sidebar.header("Filters")
