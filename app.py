@@ -280,14 +280,15 @@ elif st.session_state.current_page == "General Statistics":
     top_cities = country_data.sort_values('Population', ascending=False).head(3)
 
 
-    col1, col2, col3 = st.columns(3)
+    col1, col2, col3, col4 = st.columns(4)
     col1.metric("Total Settlements", f"{total_cities}")
     col2.metric("Total Population", f"{sum_population}")
     col3.metric("Max Population", f"{max_population}")
+    col4.metric("Min Population", f"{min_population}")
 
-    col4, col5 = st.columns(2)
-    col4.metric("Median Population", f"{median_population:.2f}")
-    col5.metric("Std. Deviation", f"{std_population:.2f}")
+    col5, col6 = st.columns(2)
+    col5.metric("Median Population", f"{median_population:.2f}")
+    col6.metric("Std. Deviation", f"{std_population:.2f}")
 
     st.subheader("Top 3 Most Populous Cities")
     for index, city in top_cities.iterrows():
@@ -305,12 +306,12 @@ elif st.session_state.current_page == "General Statistics":
 
     filtered_data = cities[(cities['Country'].isin(countries)) & (cities['Population'].between(*population_range))]
 
-    st.header("Filtered Data Overview")
-    st.write(f"Filtered Cities: {len(filtered_data)}")
+    st.header("Dataset Overview")
+    st.write(f"Settlement Count: {len(filtered_data)}")
     st.dataframe(filtered_data)
 
     st.header("Population Statistics")
-    fig = px.histogram(filtered_data, x='Population', nbins=50, title="Population Distribution of Cities in All World")
+    fig = px.histogram(filtered_data, x='Population', nbins=50, title="Population Distribution of Settlements in All World")
     st.plotly_chart(fig)
 
     top_cities = filtered_data.sort_values('Population', ascending=False).head(10)
